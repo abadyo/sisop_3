@@ -806,3 +806,209 @@ NULL
 ## g
 
 # soal 3
+## Preliminary
+- Library yang digunakan
+```C
+#include <stdio.h>
+#include <sys/socket.h>
+#include <stdlib.h>
+#include <netinet/in.h>
+#include <string.h>
+#include <unistd.h>
+#include <pthread.h>
+#include <ctype.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <errno.h>
+#include <dirent.h>
+#include <time.h>
+```
+
+Fungsi yang digunakan:
+
+1. Memutar balikan string
+```c
+char *strrev(char *str)
+{
+      char *p1, *p2;
+
+      if (! str || ! *str)
+            return str;
+      for (p1 = str, p2 = str + strlen(str) - 1; p2 > p1; ++p1, --p2)
+      {
+            *p1 ^= *p2;
+            *p2 ^= *p1;
+            *p1 ^= *p2;
+      }
+      return str;
+}
+```
+
+2. Copy Files
+```c
+void copy_files(char src[ ], char dest[ ]){
+    FILE *source, *target;
+    int i;
+    source = fopen(src, "rb"); 
+
+    if( source == NULL ) { printf("Press any key to exit...\n");} //exit(EXIT_FAILURE); 
+
+    fseek(source, 0, SEEK_END);
+    int length = ftell(source);
+
+    fseek(source, 0, SEEK_SET);
+    target = fopen(dest, "wb"); 
+
+    if( target == NULL ) { fclose(source); } //exit(EXIT_FAILURE);
+
+    for(i = 0; i < length; i++){
+    fputc(fgetc(source), target);
+    }
+
+    printf("File %s copied successfully.\n\n", src); 
+    fclose(source); 
+    fclose(target);
+}
+```
+
+## a
+
+### Summary
+Melakukan unzip dari file hartakarun.zip
+
+### Source Code
+
+Dalam Terminal:
+```c
+unzip -j harkarun.zip -d workspaces
+```
+
+![unzip](gambar/soal3/unzip.PNG)
+
+
+### Penjelasan
+Disini saya menggunakan unzip dari terminal dengan option -j untuk melepas semua files yang masih ada di dalam sub directory harakarun.zip
+
+### Hasil
+
+![hasil](gambar/soal3/direktori-workspaces.PNG)
+
+### Kendala
+NULL
+
+## b
+
+### Summary
+Melakukan pengelompokan berdasarkan tipe file yang didalam hartakarun.zip. Jika file hidden, maka masuk ke dalam kategori hidden. Jika tidak mempunyai tipe file, maka masuk ke kategori unknown.
+
+### Source Code
+```C
+void *organize(void *ptr){
+    char * filename;
+    filename = (char *) ptr;
+
+    printf("processing %s...\n", filename);
+
+    if(filename){
+        char source_path[1005];
+        char dir_target[505];
+        char str[105];
+        strcpy(str, filename);
+        char target_path[1005];
+        sprintf(source_path, "workspaces/%s", filename);
+
+
+        if(filename[0] == '.'){
+            
+            sprintf(target_path, "hartakarun/hidden/%s", filename);
+            strcpy(dir_target, "hidden");
+
+        } else{
+            
+            strrev(str);
+            char *token = strtok(str, ".");
+            strrev(token);
+            strcpy(dir_target, token);
+
+            if(strcmp(dir_target, filename) == 0) strcpy(dir_target, "Unknown");
+            else if(strcmp(dir_target, "gz") == 0) sprintf(dir_target, "tar.gz");
+            else{
+                int l = strlen(dir_target), i;
+                for(i = 0;i < l; i++) dir_target[i] = tolower(dir_target[i]);
+            }
+
+            sprintf(target_path, "hartakarun/%s/%s", dir_target, filename);
+
+        }
+
+        printf("%s will go to %s\n", filename, dir_target);
+        char dump[1005];
+        sprintf(dump, "hartakarun/%s", dir_target);
+        mkdir(dump, 0777);
+
+        copy_files(source_path, target_path);
+    }
+}
+```
+
+### Penjelasan
+1. Dicek apakah file nya ada atau tidak
+2. Jika ada, dicek apakah karakter awal dari nama file adalah . untuk mencari apakah file hidden atau tidak
+3. Jika hidden, maka dir_target menjadi hidden dan langsung copy files
+4. Jika files tidak hidden, maka akan dicari tipe file nya dengan memutar balik urutan nama file, lalu dipotong berdasarkan ., lalu diputar balik kembali 
+5. Jika nama file dan hasil yang didapatkan di nomor 4 sama, masuk ke direktori unknown. Jika dapat gz, maka masuk ke direktori tar.gz. Selain itu masuk ke tipe file masing-masing dan dijadikan tipe file nya huruf kecil.
+6. Setelah mendapatkan dir_target, lakukan copy_files.
+
+### Hasil
+
+![hasil](gambar/soal3/direktori-hartakarun.PNG)
+
+### Kendala
+NULL
+
+## c
+
+###Summary
+Lakukan b dengan multithread
+
+###Source Code
+```c
+    DIR *d = opendir("workspaces");
+    struct dirent *dir;
+    pthread_t tid[105];
+    int i=0, err;
+
+    //menyetarakan yang berada di dalam sub direktori
+    if(d){
+        while((dir = readdir(d)) != NULL){
+            if (strcmp(dir->d_name, ".") == 0 || strcmp(dir->d_name, "..") == 0) continue;
+            char * filename = dir->d_name;
+            err=pthread_create(&tid[i],NULL,organize,(void*) filename); //membuat thread
+            if(err!=0) //cek error
+            {
+                printf("\n can't create thread : [%s]",strerror(err));
+            }
+            else
+            {
+                printf("\n create thread %s success\n", filename);
+            }
+            pthread_join(tid[i], NULL);
+            i++;
+
+        }
+    } closedir(d);
+```
+
+###Penjelasan
+Pada saat membuka direktori workspaces, setiap nama files akan dibuat thread dengan fungsi organize untuk melakukan proses b pada setiap files.
+
+###Hasil
+NULL
+
+###Kendala
+Saat melakukan multithreading, terjadi kendala segmentation fault dimana saat code mengakses memory yang tidak bisa dibaca.
+
+## d
+## e
