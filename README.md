@@ -1,92 +1,335 @@
 # soal-shift-sisop-modul-3-ITA13-2022
 
-
-
-## Getting started
-
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
-
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
-
-```
-cd existing_repo
-git remote add origin https://gitlab.com/sisop_warrior/soal-shift-sisop-modul-3-ita13-2022.git
-git branch -M main
-git push -uf origin main
+## preliminary
+Library yang digunakan:
+```C
+#include<stdio.h>
+#include<string.h>
+#include<pthread.h>
+#include<stdlib.h>
+#include<unistd.h>
+#include<sys/types.h>
+#include<sys/wait.h>
+#include <dirent.h>
+#include <stdint.h>
 ```
 
-## Integrate with your tools
+Fungsi yang digunakan:
 
-- [ ] [Set up project integrations](https://gitlab.com/sisop_warrior/soal-shift-sisop-modul-3-ita13-2022/-/settings/integrations)
+1. Base64 ke string
+```C
+/* ---- Base64 Encoding/Decoding Table --- */
+char b64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-## Collaborate with your team
+void decodeblock(unsigned char in[], char *clrstr) {
+  unsigned char out[4];
+  out[0] = in[0] << 2 | in[1] >> 4;
+  out[1] = in[1] << 4 | in[2] >> 2;
+  out[2] = in[2] << 6 | in[3] >> 0;
+  out[3] = '\0';
+  strncat(clrstr, out, sizeof(out));
+}
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Automatically merge when pipeline succeeds](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+void b64_decode(char *b64src, char *clrdst) {
+  int c, phase, i;
+  unsigned char in[4];
+  char *p;
 
-## Test and Deploy
+  clrdst[0] = '\0';
+  phase = 0; i=0;
+  while(b64src[i]) {
+    c = (int) b64src[i];
+    if(c == '=') {
+      decodeblock(in, clrdst); 
+      break;
+    }
+    p = strchr(b64, c);
+    if(p) {
+      in[phase] = p - b64;
+      phase = (phase + 1) % 4;
+      if(phase == 0) {
+        decodeblock(in, clrdst);
+        in[0]=in[1]=in[2]=in[3]=0;
+      }
+    }
+    i++;
+  }
+}
 
-Use the built-in continuous integration in GitLab.
+/* encodeblock - encode 3 8-bit binary bytes as 4 '6-bit' characters */
+void encodeblock( unsigned char in[], char b64str[], int len ) {
+    unsigned char out[5];
+    out[0] = b64[ in[0] >> 2 ];
+    out[1] = b64[ ((in[0] & 0x03) << 4) | ((in[1] & 0xf0) >> 4) ];
+    out[2] = (unsigned char) (len > 1 ? b64[ ((in[1] & 0x0f) << 2) |
+             ((in[2] & 0xc0) >> 6) ] : '=');
+    out[3] = (unsigned char) (len > 2 ? b64[ in[2] & 0x3f ] : '=');
+    out[4] = '\0';
+    strncat(b64str, out, sizeof(out));
+}
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+/* encode - base64 encode a stream, adding padding if needed */
+void b64_encode(char *clrstr, char *b64dst) {
+  unsigned char in[3];
+  int i, len = 0;
+  int j = 0;
 
-***
+  b64dst[0] = '\0';
+  while(clrstr[j]) {
+    len = 0;
+    for(i=0; i<3; i++) {
+     in[i] = (unsigned char) clrstr[j];
+     if(clrstr[j]) {
+        len++; j++;
+      }
+      else in[i] = 0;
+    }
+    if( len ) {
+      encodeblock( in, b64dst, len );
+    }
+  }
+}
+```
 
-# Editing this README
+2. exec dengan eksekusi tertentu
+```C
+void *garputunggu_unzip( void *ptr )
+{
+    char *message;
+    message = (char *) ptr;
+    int status;
+    pid_t child;
+    if(strcmp(message, "quote.zip") == 0) {
+        while(statusA != 1){}
+        child = fork();
+        if(child == 0){
+            execlp("unzip", "unzip", message, "-d", "quote", NULL);
+        }
+        else{
+            ((wait(&status))>0);
+        }
+        statusA = 2;
+    } else if (strcmp(message, "music.zip") == 0){
+        while(statusA != 2) {}
+        child = fork();
+        if(child == 0){
+            execlp("unzip", "unzip", message, "-d", "music", NULL);
+        }
+        else{
+            ((wait(&status))>0);
+        }
+    } else {
+        while(statusR != 1){};
+        char passw[100];
+        char *nama_user;
+        nama_user=(char *)malloc(10*sizeof(char));
+        nama_user=getlogin();
+        snprintf(passw, sizeof(passw), "mihinomenest%s", nama_user);
+        child = fork();
+        if(child == 0){
+            execlp("unzip", "unzip", "-P", passw, message, NULL);
+        }
+        else{
+            ((wait(&status))>0);
+        }
+        statusR = 2;
+    }
+}
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!).  Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
 
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+void *garputunggu_mkdir( void *ptr )
+{
+    char *message;
+    message = (char *) ptr;
+    int status;
+    pid_t child;
+    child = fork();
+    if(child == 0){
+        execlp("mkdir", "mkdir", message, NULL);
+    }
+    else{
+        ((wait(&status))>0);
+    }
+    statusA = 1;
+}
 
-## Name
-Choose a self-explaining name for your project.
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+void *garputunggu_hapus_dir( void *ptr )
+{
+    char *message;
+    message = (char *) ptr;
+    int status;
+    pid_t child;
+    child = fork();
+    if(child == 0){
+        execlp("rm", "rm", "-r", message, NULL);
+    }
+    else{
+        ((wait(&status))>0);
+    }
+    statusR = 1;
+}
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+void *garputunggu_hapus_file( void *ptr )
+{
+    while(statusR != 3) {}
+    char *message;
+    message = (char *) ptr;
+    int status;
+    pid_t child;
+    child = fork();
+    if(child == 0){
+        execlp("rm", "rm", message, NULL);
+    }
+    else{
+        ((wait(&status))>0);
+    }
+}
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+void *garputunggu_file( void *ptr )
+{
+    char *message;
+    message = (char *) ptr;
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+    if(strcmp(message, "hasil") == 0) {
+        while(statusR != 2) {}
+        char nulis[100];
+        snprintf(nulis, sizeof(nulis), "./%s/no.txt", message);
+        FILE *tambahan = fopen(nulis, "w");
+        fprintf(tambahan, "No");
+        fclose(tambahan);
+        statusR = 3;
+    } else {
+        DIR *filebuka;
+        struct dirent *ep;
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+        char nulis[100];
+        snprintf(nulis, sizeof(nulis), "./%s/%s.txt", message, message);
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+        FILE *translate = fopen(nulis, "w");
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+        filebuka = opendir(message);
+        if(filebuka != NULL) {
+            while(ep = readdir(filebuka)) {
+                if(strcmp(ep->d_name, ".") != 0 && strcmp(ep->d_name, "..") != 0) {
+                    char line[200];
+                    char awal[300];
+                    snprintf(awal, sizeof(awal), "./%s/%s", message, ep->d_name);
+                    FILE *terbuka = fopen(awal, "r");
+                    while(fgets(line, sizeof(line), terbuka)) {
+                        // long panjang_line = strlen(line);
+                        // char * Ltrans = base64_decode(line, panjang_line, &panjang_line);
+                        char hasilT[100];
+                        b64_decode(line, hasilT);
+                        fprintf(translate, "%s\n", hasilT);
+                    }
+                    fclose(terbuka);
+                }
+            }
+            (void) closedir (filebuka);
+        } else  perror ("Couldn't open the directory");
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+        fclose(translate);
+    }
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+}
 
-## License
-For open source projects, say how it is licensed.
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+void *garputunggu_move( void *ptr )
+{
+    char *message;
+    message = (char *) ptr;
+    int status;
+    pid_t child;
+    if(strcmp(message, "quote") == 0) {
+        child = fork();
+        if(child == 0){
+            char awal[100];
+            snprintf(awal, sizeof(awal), "./%s/quote.txt", message);
+            execlp("mv", "mv", awal, "./hasil", NULL);
+        }
+        else{
+            ((wait(&status))>0);
+        }
+    } else {
+        child = fork();
+        if(child == 0){
+            char awal[100];
+            snprintf(awal, sizeof(awal), "./%s/music.txt", message);
+            execlp("mv", "mv", awal, "./hasil", NULL);
+        }
+        else{
+            ((wait(&status))>0);
+        }
+    }
+}
+
+
+
+void zip_garputunggu(char passw[], char namaz[], char namaf[]) {
+    int status;
+    pid_t child;
+    child = fork();
+    if(child == 0){
+        execlp("zip", "zip", "-P", passw, "-r", namaz, namaf, NULL);
+    }
+    else{
+        ((wait(&status))>0);
+    }
+}
+
+
+
+void garputunggu(char bash[], char *arg[]){
+    int status;
+    pid_t child;
+    child = fork();
+    if(child == 0){
+        execv(bash, arg);
+    }
+    else{
+        ((wait(&status))>0);
+    }
+}
+```
+
+3. Variable diluar main untuk fungsi:
+```C
+int statusR = 0;
+int statusA = 0;
+```
+
+# soal 1 
+## a
+Melakukan unzip dari file music.zip dan quote.zip secara bersamaan dan memasukkan ke dalam folder secara bersamaan(?).
+```C
+pthread_t threadawal[4];
+char *mkdirQ = "quote";
+char *mkdirM = "music";
+char *unzipQ = "quote.zip";
+char *unzipM = "music.zip";
+int  mkdir1, mkdir2, unzip1, unzip2;;
+
+// a
+mkdir1 = pthread_create( &threadawal[1], NULL, garputunggu_mkdir, (void*) mkdirQ); //membuat thread pertama
+mkdir2 = pthread_create( &threadawal[2], NULL, garputunggu_mkdir, (void*) mkdirM);//membuat thread kedua
+unzip1 = pthread_create( &threadawal[3], NULL, garputunggu_unzip, (void*) unzipQ); //membuat thread pertama
+unzip2 = pthread_create( &threadawal[4], NULL, garputunggu_unzip, (void*) unzipM);//membuat thread kedua
+
+pthread_join( threadawal[1], NULL);
+pthread_join( threadawal[2], NULL); 
+pthread_join( threadawal[3], NULL);
+pthread_join( threadawal[4], NULL); 
+```
+Penjelasan:
+1. Deklarasikan thread yang akan digunakan dengan `pthread_t`, yakni sebanyak 4.
+2. Deklarasi nilai int agar nilai berhasil atau tidaknya ke dalam int tersebut.
+3. Masing-masing int yangtelah dideklarasi, panggil fungsi thread dengan `pthread_create` dengan parameter: (alamat array dari thread, `NULL`, nama fungsi yang akan digunakan, parameter yang akan digunakan oleh fungsi).
+4. Setelah dilakukan, tidak lupa untuk melakukan join dengan menggunakan `pthread_join` dengan parameter (array hasil create, `NULL`).
+
+
+# soal 2
+
+# soal 3
