@@ -335,6 +335,7 @@ pthread_join( threadawal[4], NULL);
 
 ### Hasil
 
+
 ### Kendala
 NULL
 
