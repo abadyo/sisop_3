@@ -371,6 +371,12 @@ Langkah decode Base64:
 4. Lalu masukkan hasilnya ke dalam `hasil.txt`
 4. Repat untuk file.txt lainnya dengan cara yang sama di folder satu lagi.
 
+### Hasil
+
+![hasil](gambar/soal1-3.PNG)
+
+![hasil](gambar/soal1-4.PNG)
+
 ### Kendala
 NULL
 
@@ -404,6 +410,10 @@ Langkah memindahkan file:
 3. Mencari file dengan nama `nama_folder + .txt`.
 4. Pindahkan ke folder hasil.
 
+### Hasil
+
+![hasil](gambar/soal1-5.PNG)
+
 ### Kendala
 Awalnya bingung apakah membuat folder secara bersamaan atau tidak, tetapi asisten tidak mempertanyakan hal tersebut.
 
@@ -427,6 +437,10 @@ char *nama_user;
 nama_user=(char *)malloc(10*sizeof(char));
 nama_user=getlogin();
 ```
+
+### Hasil
+
+![hasil](gambar/soal1-6.PNG)
 
 ### Kendala
 Tidak ada penjelasan apakah menggunakan thread atau tidak. Namun asisten tidak mempertanyakan.
@@ -465,6 +479,10 @@ Thread dilakukan cara yang sama dengan point-point sebelumnya dengan urutan:
 3. Buat no.txt di dalam folder hasil.
 4. Tulis string 'No' di dalam no.txt.
 5. Unzip folder hasil dengan password ketentuan sebelumnya.
+
+### Hasil
+
+![hasil](gambar/soal1-7.PNG)
 
 ### Kendala
 NULL
