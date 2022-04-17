@@ -14,9 +14,6 @@
 #include <dirent.h>
 #include <time.h>
 
-pthread_t tid[105];
-char listfiles[105][1005];
-
 char *strrev(char *str)
 {
       char *p1, *p2;
@@ -107,6 +104,7 @@ int main(){
     mkdir("hartakarun", 0777);
     DIR *d = opendir("workspaces");
     struct dirent *dir;
+    pthread_t tid[105];
     int i=0, err;
 
     //menyetarakan yang berada di dalam sub direktori
@@ -114,7 +112,7 @@ int main(){
         while((dir = readdir(d)) != NULL){
             if (strcmp(dir->d_name, ".") == 0 || strcmp(dir->d_name, "..") == 0) continue;
             char * filename = dir->d_name;
-            err=pthread_create(&(tid[i]),NULL,organize,(void*) filename); //membuat thread
+            err=pthread_create(&tid[i],NULL,organize,(void*) filename); //membuat thread
             if(err!=0) //cek error
             {
                 printf("\n can't create thread : [%s]",strerror(err));
@@ -123,11 +121,10 @@ int main(){
             {
                 printf("\n create thread %s success\n", filename);
             }
+            pthread_join(tid[i], NULL);
             i++;
 
         }
     } closedir(d);
 
-    int j = 0;
-    for(j = 0; j < i; j++) pthread_join(tid[j], NULL);
 }
