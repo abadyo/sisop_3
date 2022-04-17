@@ -335,6 +335,9 @@ pthread_join( threadawal[4], NULL);
 
 ### Hasil
 
+![hasil](gambar/soal1-1.PNG)
+
+![hasil](gambar/soal1-2.PNG)
 
 ### Kendala
 NULL
