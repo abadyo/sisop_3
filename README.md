@@ -487,6 +487,322 @@ Thread dilakukan cara yang sama dengan point-point sebelumnya dengan urutan:
 ### Kendala
 NULL
 
+
+
+
+
+
 # soal 2
+
+## Preliminary
+- Library yang digunakan
+```C
+#include <stdio.h>
+#include <sys/socket.h>
+#include <stdlib.h>
+#include <netinet/in.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <string.h>
+#include <unistd.h>
+#include <stdbool.h>
+```
+
+
+- Konfigurasi client
+```C
+#define PORT 8080
+int main(int argc, char const *argv[]) {
+    struct sockaddr_in address;
+    int sock = 0, valread;
+    struct sockaddr_in serv_addr;
+    // char *hello = "Hello from client";
+    char buffer[1024] = {0};
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        printf("\n Socket creation error \n");
+        return -1;
+    }
+  
+    memset(&serv_addr, '0', sizeof(serv_addr));
+  
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(PORT);
+      
+    if(inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr)<=0) {
+        printf("\nInvalid address/ Address not supported \n");
+        return -1;
+    }
+  
+    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+        printf("\nConnection Failed \n");
+        return -1;
+    }
+
+    // a
+    while(1) {
+    // Koding dimulai disini
+    }
+   
+    return 0;
+}
+```
+
+- Konfigursi server
+```C
+bool is_mixed(char* str) {
+
+    int   i;
+    bool  found_lower = false, found_upper = false;
+
+    for (int i = 0; str[i] != '\0'; i++) {
+        found_lower = found_lower || (str[i] >= 'a' && str[i] <= 'z');
+        found_upper = found_upper || (str[i] >= 'A' && str[i] <= 'Z');
+
+        if (found_lower && found_upper) break;
+    }
+
+    return (found_lower && found_upper);
+
+}
+
+
+#define PORT 8080
+int main(int argc, char const *argv[]) {
+    int server_fd, new_socket, valread;
+    struct sockaddr_in address;
+    int opt = 1;
+    int addrlen = sizeof(address);
+    char buffer[1024] = {0};
+    char *hello = "Hello from server";
+      
+    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
+        perror("socket failed");
+        exit(EXIT_FAILURE);
+    }
+      
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
+        perror("setsockopt");
+        exit(EXIT_FAILURE);
+    }
+
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons( PORT );
+      
+    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address))<0) {
+        perror("bind failed");
+        exit(EXIT_FAILURE);
+    }
+
+    if (listen(server_fd, 3) < 0) {
+        perror("listen");
+        exit(EXIT_FAILURE);
+    }
+
+    if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen))<0) {
+        perror("accept");
+        exit(EXIT_FAILURE);
+    }
+
+
+    printf("Connected to port %d\n", PORT);
+
+    if(access( "problem.tsv", F_OK ) != 0) {
+        FILE *tsv = fopen("problem.tsv", "a+");
+        fprintf(tsv, "Judul\tAuthor\n");
+        fclose(tsv);
+    }
+    
+    while(1) {
+    // Koding mulai di sini
+    }
+    
+    return 0;
+}
+```
+## a
+
+### Summary
+Membuat sistem server-client login dan register. Tiap user baru yang masuk, akan dimasukkan ke dalam file 'user.txt' pada folder client denga format `username:password`.
+Ketentuan register:
+1. Username unik.
+2. Pssword harus alphanumeric, terdapat upper dan lower case dan panjangnya harus lebih dari 6 karakter.
+Saat logn, sever mengecek username dan password yang dimasukkan ke dalam client.
+
+### Source Code
+- Client
+```C
+char awal1[100] = {0};
+char username[100];
+char password[100];
+printf("Masuk or Daftar?!\n");
+printf("1. Masuk\n2. Daftar\n>>> ");
+scanf("%s", awal1);
+send(sock , awal1 , 100, 0 );
+
+printf("Loading.....\n");
+read( sock , buffer, 1024);
+if(strcmp(buffer, "M") == 0) {
+    printf("Hello\n");
+    printf("Username: ");
+    scanf("%s", username);
+    send(sock , username , 100, 0 );
+
+    printf("Password: ");
+    scanf("%s", password);
+    send(sock , password , 100, 0 );
+
+    read( sock , buffer, 1024);
+    if(strcmp(buffer, "success") == 0) {
+        // Do something kalau berhasil masuk
+    } else {
+        printf("Sorry, wrong username/password\n");
+    }
+} else if(strcmp(buffer, "D") == 0) {
+    printf("Username: ");
+    scanf("%s", username);
+    send(sock , username , 100, 0 );
+
+    printf("Password: ");
+    scanf("%s", password);
+    send(sock , password , 100, 0 );
+    
+    read(sock, buffer, 1024);
+    if(strcmp(buffer, "allow") == 0) {
+        printf("Selamat datang!\n\n");
+    } else if(strcmp(buffer, "denied_exist") == 0){
+        printf("Gagal daftar: Sudah ada pengguna dengan username itu.\n\n");
+    } else {
+        printf("Gagal daftar: Password harus lebih dari 6 karakter dan Alphanumeric Upper/lower\n\n");
+    }
+}
+```
+
+- Server
+```C
+char username[1024] = {0};
+char password[1024] = {0};
+char terdaftar[3000];
+
+
+read( new_socket , buffer, 1024);
+if(strcmp(buffer, "Masuk") == 0) {
+    printf("Proses Masuk dijalankan\n");
+    send(new_socket , "M" , 100 , 0 );
+
+    read( new_socket , username, 1024);
+    // printf("Username: %s", username);
+    
+    read( new_socket , password, 1024);
+    // printf("Password: %s", password);
+    
+    FILE *file_terdaftar = fopen("akun.txt", "r");
+    char line[200];
+    while(fgets(line, sizeof(line), file_terdaftar)) {
+        char *pisah = strtok(line, ":");
+        printf("%s\n", line);
+        if(strcmp(pisah, username) == 0) {
+            pisah = strtok(NULL, ":");
+            printf("%s\n", pisah);
+            pisah[strcspn(pisah, "\n")] = 0;
+            if(strcmp(pisah, password) == 0) {
+                send(new_socket , "success" , 100 , 0 );
+                break;
+            } else  {
+                send(new_socket , "error" , 100 , 0 );
+                break;
+            }
+        } 
+        }
+    
+    fclose(file_terdaftar);
+    
+
+} else if(strcmp(buffer, "Daftar") == 0) {
+    printf("Proses Daftar dijalankan\n");
+    send(new_socket , "D" , 100 , 0 );
+
+    read( new_socket , username, 1024);
+    // printf("Username: %s", username);
+    
+    read( new_socket , password, 1024);
+    // printf("Password: %s", password);
+
+    FILE *file_terdaftar = fopen("akun.txt", "a+");
+    char line[200];
+    int check = 0;
+    while(fgets(line, sizeof(line), file_terdaftar)) {
+        // char terpilih[1000];
+        char *pisah = strtok(line, ":");
+        // printf("%s \n", pisah);
+        if(!is_mixed(password) || strlen(password) < 6) {
+            send(new_socket , "denied_pass_term" , 100 , 0 );
+            check = 1;
+            break;
+        }
+        if(strcmp(pisah, username) == 0) {
+            send(new_socket , "denied_exist" , 100 , 0 );
+            check = 1;
+            break;
+        }
+        
+    }
+    if(check == 0) {
+        fprintf(file_terdaftar, "%s:%s\n", username, password);
+        send(new_socket , "allow" , 100 , 0 );
+    }
+    fclose(file_terdaftar);
+    
+
+} else {
+    printf("Input Salah!\n");
+}
+```
+### Penjelasan
+1. Client memasukkan string antara 'Masuk" atau 'Daftar'
+2. Server mengecek inputan tersebut. 
+3. Jika 'Masuk':
+    1. Server membalas ke client.
+    2. Client memasukkan username dan password.
+    3. Server menerima inputan dari client dan akan memberikan respond jika ada atau tidak ada di dalam file 'user.txt'.
+    4. Lanjut ke point selanjutnya.
+4. Jika 'Daftar':
+    1. Server membalas ke client.
+    2. Client memasukkan username dan password.
+    3. Server menerima inputan dari client dan akan memberikan respond jika username sudah ada atau password tidak sesuai kriteria.
+    4. Kembali ke awal jika syarat terpenuhi..
+
+### Hasil
+
+### Kendala
+NULL
+
+## b
+
+### Summary
+Saat server dijalankan, membuATatile 'problem.tsv'.
+
+### Source Code
+```C
+if(access( "problem.tsv", F_OK ) != 0) {
+    FILE *tsv = fopen("problem.tsv", "a+");
+    fprintf(tsv, "Judul\tAuthor\n");
+    fclose(tsv);
+}
+```
+
+### Penjelasan
+Sudah jelas, server dijalankan, akan dicek apakah file ada. Jika tidak, 'problem.tsv' dibuat.
+
+### Hasil
+
+### Kendala
+NULL
+
+## c
+## d
+## e
+## f
+## g
 
 # soal 3
