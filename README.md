@@ -303,7 +303,10 @@ int statusA = 0;
 
 # soal 1 
 ## a
+### Summary
 Melakukan unzip dari file music.zip dan quote.zip secara bersamaan dan memasukkan ke dalam folder secara bersamaan(?).
+
+## Source Code
 ```C
 pthread_t threadawal[4];
 char *mkdirQ = "quote";
@@ -323,12 +326,144 @@ pthread_join( threadawal[2], NULL);
 pthread_join( threadawal[3], NULL);
 pthread_join( threadawal[4], NULL); 
 ```
-Penjelasan:
+
+### Penjelasan
 1. Deklarasikan thread yang akan digunakan dengan `pthread_t`, yakni sebanyak 4.
 2. Deklarasi nilai int agar nilai berhasil atau tidaknya ke dalam int tersebut.
 3. Masing-masing int yangtelah dideklarasi, panggil fungsi thread dengan `pthread_create` dengan parameter: (alamat array dari thread, `NULL`, nama fungsi yang akan digunakan, parameter yang akan digunakan oleh fungsi).
 4. Setelah dilakukan, tidak lupa untuk melakukan join dengan menggunakan `pthread_join` dengan parameter (array hasil create, `NULL`).
 
+### Hasil
+
+### Kendala
+NULL
+
+## b
+
+### Summary 
+Tiap folder yang di unzip sebelumnya berisi file dengan isi string yang diencode ke Base64. Decode string tersebut ke plaintext dengan hasilnya dimasukkan ke dalam file baru bernama `quote.txt` atau `music.txt` sesuai nama folder di masing-masing folder, sehingga terdapt dua file.txt berbeda di dua folder yang berbeda pula.
+
+### Source code
+```C
+pthread_t threadFile[2];//inisialisasi awal
+char *fileQ = "quote";
+char *fileM = "music";
+int  file1, file2;
+
+file1 = pthread_create( &threadFile[1], NULL, garputunggu_file, (void*) fileQ); //membuat thread pertama
+file2 = pthread_create( &threadFile[2], NULL, garputunggu_file, (void*) fileM);//membuat thread kedua
+
+pthread_join( threadFile[1], NULL);
+pthread_join( threadFile[2], NULL); 
+```
+
+### Penjelasan
+Sama seperti langkah point a sebelumnya, hanya saja mengubah banyak thread yang digunakan (2), dan parameter fungsi di dalam fungsi `pthread_create`, kemudian di join dengan `pthread_join`.
+
+Langkah decode Base64:
+1. Membuka folder yang dipilih.
+2. Baca tiap file di dalam folder tersebut dengan membua satu-satu file.txt tersebut.
+3. File.txt yang dibuka, baca line pertama, lalu gunakan fungsi `base54_encode`.
+4. Lalu masukkan hasilnya ke dalam `hasil.txt`
+4. Repat untuk file.txt lainnya dengan cara yang sama di folder satu lagi.
+
+### Kendala
+NULL
+
+## c
+### Summary
+Pindah kedua file `hasil.txt` dari kedua folder ke folder baru bernama 'hasil'.
+
+### Source Code
+```C
+char *buathasil[] = {"mkdir", "hasil", NULL};
+garputunggu("/bin/mkdir", buathasil);
+
+pthread_t threadMove[2];//inisialisasi awal
+char *moveQ = "quote";
+char *moveM = "music";
+int  move1, move2;
+
+move1 = pthread_create( &threadMove[1], NULL, garputunggu_move, (void*) moveQ); //membuat thread pertama
+move2 = pthread_create( &threadMove[2], NULL, garputunggu_move, (void*) moveM);//membuat thread kedua
+
+pthread_join( threadMove[1], NULL);
+pthread_join( threadMove[2], NULL); 
+```
+
+### Penjelasan
+Cara yang sama seperti point-ponts sebelumnya.
+
+Langkah memindahkan file:
+1. Panggil fungsi `garputunggu` untu membuat folder baru bernama 'hasil'
+2. Buka folder music/quote.
+3. Mencari file dengan nama `nama_folder + .txt`.
+4. Pindahkan ke folder hasil.
+
+### Kendala
+Awalnya bingung apakah membuat folder secara bersamaan atau tidak, tetapi asisten tidak mempertanyakan hal tersebut.
+
+## d
+
+### Summary
+Folder 'hasil' akan di-zip dengan password 'mihinomenest' + nama_user.
+
+## Source Code
+```C
+char name[100];
+snprintf(name, sizeof(name), "mihinomenest%s", nama_user);
+zip_garputunggu(name, "hasil.zip", "hasil");
+```
+
+### Penjelasan
+Program hanya memanggil fungsi membuat folder dengan parameter (password, nama_zip_output, nama_folder_dizip).
+Cara mendapatkan nama user:
+```C
+char *nama_user;
+nama_user=(char *)malloc(10*sizeof(char));
+nama_user=getlogin();
+```
+
+### Kendala
+Tidak ada penjelasan apakah menggunakan thread atau tidak. Namun asisten tidak mempertanyakan.
+
+## e
+
+### Summary
+Karena pengen ngerepotin praktikan, unzip 'hasil.zip' lalu buat file bernama no.txt dengan isinya string 'No' ke dalam folder hasil, lalu zip kembali folder hasil seperti point d.
+
+## Source Code
+```C
+pthread_t ngulang[10];
+char * repothapus = "hasil";
+char * repotzip = "hasil.zip";
+char * repotfile = "hasil";
+int repot1, repot2, repot3, repot4;
+
+repot1 = pthread_create( &ngulang[1], NULL, garputunggu_hapus_dir, (void*) repothapus); //membuat thread pertama
+repot2 = pthread_create( &ngulang[2], NULL, garputunggu_unzip, (void*) repotzip);//membuat thread kedua
+repot3 = pthread_create( &ngulang[3], NULL, garputunggu_file, (void*) repotfile);
+repot4 = pthread_create( &ngulang[4], NULL, garputunggu_hapus_file, (void*) repotzip);
+
+pthread_join( ngulang[1], NULL);
+pthread_join( ngulang[2], NULL); 
+pthread_join( ngulang[3], NULL); 
+pthread_join( ngulang[4], NULL); 
+
+char name2[100];
+snprintf(name2, sizeof(name2), "mihinomenest%s", nama_user);
+zip_garputunggu(name2, "hasil.zip", "hasil");
+```
+### Penjelasan
+Thread dilakukan cara yang sama dengan point-point sebelumnya dengan urutan:
+1. Hapus Folder hasil di luat hasil.zip.
+2. Unzip File.
+3. Buat no.txt di dalam folder hasil.
+4. Tulis string 'No' di dalam no.txt.
+5. Unzip folder hasil dengan password ketentuan sebelumnya.
+
+### Kendala
+NULL
 
 # soal 2
 
