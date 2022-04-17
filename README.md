@@ -970,10 +970,10 @@ NULL
 
 ## c
 
-###Summary
+### Summary
 Lakukan b dengan multithread
 
-###Source Code
+### Source Code
 ```c
     DIR *d = opendir("workspaces");
     struct dirent *dir;
@@ -1001,13 +1001,13 @@ Lakukan b dengan multithread
     } closedir(d);
 ```
 
-###Penjelasan
+### Penjelasan
 Pada saat membuka direktori workspaces, setiap nama files akan dibuat thread dengan fungsi organize untuk melakukan proses b pada setiap files.
 
-###Hasil
+### Hasil
 NULL
 
-###Kendala
+### Kendala
 Saat melakukan multithreading, terjadi kendala segmentation fault dimana saat code mengakses memory yang tidak bisa dibaca.
 
 ## d
